@@ -62,9 +62,10 @@ function App() {
   const [bomData, setBomData] = useState([]);
   const [bomApiUrls, setBomApiUrls] = useState([]);
   const [rawBom, setRawBom] = useState(null);
-  const [showBadForecasts, setShowBadForecasts] = useState(false);
+  const [hideUnsuitableForecasts, setHideUnsuitableForecasts] = useState(false);
   const [showCoords, setShowCoords] = useState(false);
   const [showApiData, setShowApiData] = useState(false);
+  const [selectedBomStations, setSelectedBomStations] = useState(['95872', '94870', '95864', '94853', '94871', '94847']);
   const [forecast, setForecast] = useState([]);
   const [waveData, setWaveData] = useState([]);
   const [lat, setLat] = useState(null);
@@ -76,16 +77,12 @@ function App() {
   const [apiUrlDisplay, setApiUrlDisplay] = useState('');
   const [apiResponseDisplay, setApiResponseDisplay] = useState('');
   const [selectedModel, setSelectedModel] = useState('gfs_seamless');
-  // State for selected BOM stations (initialize with all IDs)
-  const [selectedBomStations, setSelectedBomStations] = useState(['95872', '94870', '95864', '94853', '94871', '94847']);
 
   useEffect(() => {
     console.log('BOM Fetch: Starting useEffect...');
-    // Fetch BOM data for all identifiers
     const stationIds = ['95872', '94870', '95864', '94853', '94871', '94847'];
     const urls = stationIds.map(id => {
       const originalUrl = `https://www.bom.gov.au/fwo/IDV60701/IDV60701.${id}.json`;
-      // Correct proxy format: Append RAW URL directly to the path
       return `https://corsproxy.io/${originalUrl}`;
     });
     console.log('BOM Fetch: Generated URLs (using proxy):', urls);
@@ -125,13 +122,11 @@ function App() {
       })
     ).then(fetchedData => {
       console.log('BOM Fetch: Promise.all finished. Setting bomData state:', fetchedData);
-      // Initialize selected stations once data is fetched
-      // setSelectedBomStations(fetchedData.map(s => s.id)); // Optional: Keep all selected initially
       setBomData(fetchedData);
     }).catch(error => {
       console.error('BOM Fetch: Error in Promise.all chain:', error);
     });
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     // Fetch forecast whenever lat/lon changes
@@ -292,15 +287,6 @@ function App() {
     geocodeLocation(locationInput);
   }
 
-  // Handler for BOM Station Checkbox Toggle
-  const handleBomStationToggle = (stationId) => {
-    setSelectedBomStations(prevSelected =>
-      prevSelected.includes(stationId)
-        ? prevSelected.filter(id => id !== stationId)
-        : [...prevSelected, stationId]
-    );
-  };
-
   function getBestHoursSummary(forecast, minWind, maxWind, preferredDirs, waveData) {
     if (!forecast.length) return null;
 
@@ -377,6 +363,27 @@ function App() {
 
   const bestHoursSummary = getBestHoursSummary(forecast, minWind, maxWind, preferredDirs, waveData);
 
+  // Filter out 'bad' blocks when hideUnsuitableForecasts is true (checkbox checked hides bad)
+  const filteredGroups = bestHoursSummary?.groups?.filter(group => {
+    // hideUnsuitableForecasts false: show all; true: hide bad
+    return !hideUnsuitableForecasts || group.rating !== 'bad';
+  }) || [];
+
+  const filteredForecast = forecast.filter(block => {
+    const rating = rateWind(block.windSpeed, block.windDir, minWind, maxWind, preferredDirs);
+    // hideUnsuitableForecasts false: show all; true: hide bad
+    return !hideUnsuitableForecasts || rating !== 'bad';
+  });
+
+  // Handler for BOM Station Checkbox Toggle
+  const handleBomStationToggle = (stationId) => {
+    setSelectedBomStations(prevSelected =>
+      prevSelected.includes(stationId)
+        ? prevSelected.filter(id => id !== stationId)
+        : [...prevSelected, stationId]
+    );
+  };
+
   return (
     <Box sx={{ maxWidth: 700, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom>Wingfoil Wind App</Typography>
@@ -415,11 +422,12 @@ function App() {
           <FormControlLabel
               control={
                 <Checkbox
-                  checked={showBadForecasts}
-                  onChange={(e) => setShowBadForecasts(e.target.checked)}
+                  checked={hideUnsuitableForecasts}
+                  onChange={() => setHideUnsuitableForecasts(prev => !prev)}
+                  size="small"
                 />
               }
-              label="Show BAD forecasts"
+              label="Hide Unsuitable Wind Forecasts"
             />
             <FormControlLabel
               control={
@@ -439,19 +447,24 @@ function App() {
               }
               label="Show API Data"
             />
-            <Select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              size="small"
-              sx={{ ml: 2 }}
-            >
-              {WIND_MODELS.map(model => (
-                <MenuItem key={model.value} value={model.value}>
-                  {model.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </Box>
+        </Box>
+
+        {/* Forecast model selection row */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+          <Typography>Select your forecast model:</Typography>
+          <Select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            size="small"
+          >
+            {WIND_MODELS.map(model => (
+              <MenuItem key={model.value} value={model.value}>
+                {model.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+
         {resolvedLocationName && lat !== null && lon !== null && showCoords && (
           <Typography variant="caption" sx={{ mb: 2, display: 'block' }}>
             (Lat: {lat.toFixed(4)}, Lon: {lon.toFixed(4)})
@@ -484,7 +497,7 @@ function App() {
             />
           </Grid>
           <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>Preferred Directions</Typography>
+            <Typography variant="h6" gutterBottom>Preferred Wind Directions</Typography>
             <FormGroup row>
               {WIND_DIRECTIONS.map(dir => (
                 <FormControlLabel
@@ -510,12 +523,14 @@ function App() {
         minWind={minWind}
         maxWind={maxWind}
         preferredDirs={preferredDirs}
+        bomApiUrls={bomApiUrls}
+        rawBom={rawBom}
       />
 
-      <Typography variant="h6" sx={{ mt: 3 }}>Today's Wind Summary</Typography>
+        <Typography variant="h6" sx={{ mt: 3 }}>Today's Wind Summary</Typography>
         {bestHoursSummary && (
           <Grid container spacing={2}>
-            {bestHoursSummary.groups.map((group, index) => (
+            {filteredGroups.map((group, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Paper elevation={2} sx={{ p: 2, background: group.rating === 'good' ? '#a5d6a7' : group.rating === 'ok' ? '#fff59d' : '#ef9a9a' }}>
                   <Typography variant="subtitle2">{group.startTime} - {group.endTime}</Typography>
@@ -537,9 +552,8 @@ function App() {
 
         <Typography variant="h6" sx={{ mt: 3 }}>Wind Forecast</Typography>
         <Grid container spacing={2}>
-          {forecast.map((block, index) => {
+          {filteredForecast.map((block, index) => {
             const rating = rateWind(block.windSpeed, block.windDir, minWind, maxWind, preferredDirs);
-            if (rating === 'bad' && !showBadForecasts) return null; // Skip bad forecasts if toggle is off
             
             let color = rating === 'good' ? '#a5d6a7' : rating === 'ok' ? '#fff59d' : '#ef9a9a';
             
@@ -559,10 +573,10 @@ function App() {
                   {waveBlock && (
                     <Box sx={{ mt: 1 }}>
                       <Typography>
-                        Wave: {waveBlock.waveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.waveDir ? `(${Math.round(waveBlock.waveDir)}°)` : ''}
+                        Wave: {waveBlock.waveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.waveDir ? `${Math.round(waveBlock.waveDir)}°` : ''}
                       </Typography>
                       <Typography>
-                        Wind Wave: {waveBlock.windWaveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.windWaveDir ? `(${Math.round(waveBlock.windWaveDir)}°)` : ''}
+                        Wind Wave: {waveBlock.windWaveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.windWaveDir ? `${Math.round(waveBlock.windWaveDir)}°` : ''}
                       </Typography>
                     </Box>
                   )}
@@ -571,21 +585,6 @@ function App() {
             );
           })}
         </Grid>
-      </Paper>
-      {/* BOM debug output */}
-      <Paper sx={{ p: 2, mt: 3 }}>
-        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>BOM API URLs:</Typography>
-        <pre style={{ fontSize: 12, maxHeight: 100, overflow: 'auto', background: '#f6f6f6', padding: 8 }}>
-          {bomApiUrls && bomApiUrls.length > 0 ? bomApiUrls.join('\n') : 'No URLs'}
-        </pre>
-        <Typography variant="caption" sx={{ fontWeight: 'bold', mt: 2 }}>BOM Debug Output:</Typography>
-        <pre style={{ fontSize: 12, maxHeight: 200, overflow: 'auto', background: '#f6f6f6', padding: 8 }}>
-          {JSON.stringify(bomData, null, 2)}
-        </pre>
-        <Typography variant="caption" sx={{ fontWeight: 'bold', mt: 2 }}>Raw BOM JSON (95872):</Typography>
-        <pre style={{ fontSize: 12, maxHeight: 200, overflow: 'auto', background: '#f0f0f0', padding: 8 }}>
-          {rawBom ? JSON.stringify(rawBom, null, 2) : 'No data'}
-        </pre>
       </Paper>
     </Box>
   );
