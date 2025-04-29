@@ -70,7 +70,7 @@ function App() {
   const [waveData, setWaveData] = useState([]);
   const [lat, setLat] = useState(null);
   const [lon, setLon] = useState(null);
-  const [locationInput, setLocationInput] = useState('Melbourne');
+  const [locationInput, setLocationInput] = useState('Mentone');
   const [locationError, setLocationError] = useState('');
   const [resolvedLocationName, setResolvedLocationName] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
