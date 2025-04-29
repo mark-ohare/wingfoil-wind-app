@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/wingfoil-wind-app/static/js/main.1367beee.js",
+    "main.js": "/wingfoil-wind-app/static/js/main.c30c8bc3.js",
     "index.html": "/wingfoil-wind-app/index.html",
-    "main.1367beee.js.map": "/wingfoil-wind-app/static/js/main.1367beee.js.map"
+    "main.c30c8bc3.js.map": "/wingfoil-wind-app/static/js/main.c30c8bc3.js.map"
   },
   "entrypoints": [
-    "static/js/main.1367beee.js"
+    "static/js/main.c30c8bc3.js"
   ]
 }
