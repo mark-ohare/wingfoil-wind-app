@@ -56,8 +56,8 @@ function ForecastBlock({ block, minWind, maxWind, preferredDirs, waveData }) {
 }
 
 function App() {
-  const [minWind, setMinWind] = useState(15);
-  const [maxWind, setMaxWind] = useState(25);
+  const [minWind, setMinWind] = useState(12);
+  const [maxWind, setMaxWind] = useState(35);
   const [preferredDirs, setPreferredDirs] = useState(['S', 'SW', 'SE']);
   const [bomData, setBomData] = useState([]);
   const [bomApiUrls, setBomApiUrls] = useState([]);
