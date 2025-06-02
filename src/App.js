@@ -152,6 +152,7 @@ function App() {
         latitude: lat.toFixed(6),
         longitude: lon.toFixed(6),
         hourly: 'wave_height,wind_wave_height,wave_direction,wind_wave_direction',
+        // hourly: 'wind_wave_height,wind_wave_direction',
         timezone: 'Australia/Sydney'
       });
       const waveApiUrl = `https://marine-api.open-meteo.com/v1/marine?${waveParams.toString()}`;
@@ -538,9 +539,6 @@ function App() {
                     Wind: {group.averageWind.toFixed(1)} kt {group.direction}
                   </Typography>
                   <Typography>
-                    Wave: {group.averageWaveHeight?.toFixed(1) ?? 'N/A'} m {group.averageWaveDir ? `(${Math.round(group.averageWaveDir)}°)` : ''}
-                  </Typography>
-                  <Typography>
                     Wind Wave: {group.averageWindWaveHeight?.toFixed(1) ?? 'N/A'} m {group.averageWindWaveDir ? `(${Math.round(group.averageWindWaveDir)}°)` : ''}
                   </Typography>
                   <Typography>Rating: {group.rating.toUpperCase()}</Typography>
@@ -568,16 +566,14 @@ function App() {
                   <Typography>
                     Wind: {block.windSpeed?.toFixed(1) ?? 'N/A'} kt {block.windDir ?? 'N/A'} ({block.windDeg?.toFixed(0) ?? 'N/A'}°)
                   </Typography>
-                  <Typography>Rating: {rating.toUpperCase()}</Typography>
+                  
                   {/* Display wave data if found */}
                   {waveBlock && (
                     <Box sx={{ mt: 1 }}>
                       <Typography>
-                        Wave: {waveBlock.waveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.waveDir ? `${Math.round(waveBlock.waveDir)}°` : ''}
-                      </Typography>
-                      <Typography>
                         Wind Wave: {waveBlock.windWaveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.windWaveDir ? `${Math.round(waveBlock.windWaveDir)}°` : ''}
                       </Typography>
+                      <Typography>Rating: {rating.toUpperCase()}</Typography>
                     </Box>
                   )}
                 </Paper>
