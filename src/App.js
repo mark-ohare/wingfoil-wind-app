@@ -81,12 +81,13 @@ function App() {
   useEffect(() => {
     console.log('BOM Fetch: Starting useEffect...');
     const stationIds = ['95872', '94870', '95864', '94853', '94871', '94847'];
+    // Use Netlify Function as a CORS-safe proxy
     const urls = stationIds.map(id => {
-      const originalUrl = `https://www.bom.gov.au/fwo/IDV60701/IDV60701.${id}.json`;
-      return `https://corsproxy.io/${originalUrl}`;
+      // Pass the original URL as a query parameter to the Netlify function
+      return `/.netlify/functions/weather?url=https://www.bom.gov.au/fwo/IDV60701/IDV60701.${id}.json`;
     });
-    console.log('BOM Fetch: Generated URLs (using proxy):', urls);
-    setBomApiUrls(urls); // Store the proxied URLs
+    console.log('BOM Fetch: Generated URLs (using Netlify function):', urls);
+    setBomApiUrls(urls); // Store the Netlify function URLs
     console.log('BOM Fetch: Set BomApiUrls state.');
     Promise.all(
       urls.map(async url => {
