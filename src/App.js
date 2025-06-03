@@ -19,6 +19,42 @@ const WIND_MODELS = [
   { value: 'icon_seamless', label: 'DWD Germany' }
 ];
 
+// --- Wind Direction UI Grouping ---
+const DIRECTION_GROUPS = [
+  {
+    label: 'N',
+    directions: ['N', 'NNE', 'NNW']
+  },
+  {
+    label: 'E',
+    directions: ['E', 'ENE', 'ESE']
+  },
+  {
+    label: 'S',
+    directions: ['S', 'SSE', 'SSW']
+  },
+  {
+    label: 'W',
+    directions: ['W', 'WNW', 'WSW']
+  },
+  {
+    label: 'NE',
+    directions: ['NE']
+  },
+  {
+    label: 'SE',
+    directions: ['SE']
+  },
+  {
+    label: 'SW',
+    directions: ['SW']
+  },
+  {
+    label: 'NW',
+    directions: ['NW']
+  }
+];
+
 function directionToDegrees(dir) {
   // Convert compass direction to degrees (16-point compass)
   const map = {
