@@ -19,41 +19,26 @@ const WIND_MODELS = [
   { value: 'icon_seamless', label: 'DWD Germany' }
 ];
 
-// --- Wind Direction UI Grouping ---
-const DIRECTION_GROUPS = [
+// --- Wind Direction UI Columns ---
+const WIND_DIRECTION_COLUMNS = [
   {
     label: 'N',
-    directions: ['N', 'NNE', 'NNW']
+    directions: ['N', 'NNE', 'NNW', 'NE', 'NW']
   },
   {
     label: 'E',
-    directions: ['E', 'ENE', 'ESE']
+    directions: ['E', 'ENE', 'ESE', 'NE', 'SE']
   },
   {
     label: 'S',
-    directions: ['S', 'SSE', 'SSW']
+    directions: ['S', 'SSE', 'SSW', 'SE', 'SW']
   },
   {
     label: 'W',
-    directions: ['W', 'WNW', 'WSW']
-  },
-  {
-    label: 'NE',
-    directions: ['NE']
-  },
-  {
-    label: 'SE',
-    directions: ['SE']
-  },
-  {
-    label: 'SW',
-    directions: ['SW']
-  },
-  {
-    label: 'NW',
-    directions: ['NW']
+    directions: ['W', 'WNW', 'WSW', 'NW', 'SW']
   }
 ];
+// No separate diagonals row.
 
 function directionToDegrees(dir) {
   // Convert compass direction to degrees (16-point compass)
@@ -547,30 +532,33 @@ function App() {
 ) }
           <Grid item xs={12}>
   <Typography variant="h6" gutterBottom>Preferred Wind Directions</Typography>
-  <FormGroup row sx={{ flexWrap: 'wrap' }}>
-    {DIRECTION_GROUPS.map(group => (
-      <Box key={group.label} sx={{ mr: 2, minWidth: 70 }}>
-        <Typography variant="subtitle2" align="center">{group.label}</Typography>
-        {group.directions.map(dir => (
-          <FormControlLabel
-            key={dir}
-            control={
-              <Checkbox
-                checked={preferredDirs.includes(dir)}
-                onChange={() => setPreferredDirs(prev =>
-                  prev.includes(dir)
-                    ? prev.filter(d => d !== dir)
-                    : [...prev, dir]
-                )}
-                size="small"
-              />
-            }
-            label={dir}
-          />
-        ))}
-      </Box>
+  <Grid container spacing={2}>
+    {WIND_DIRECTION_COLUMNS.map((group, idx) => (
+      <Grid item xs={6} md={3} key={group.label}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: 1, borderColor: 'grey.300', borderRadius: 2, p: 1, bgcolor: 'grey.50' }}>
+          <Typography variant="subtitle2" align="center" sx={{ fontWeight: 'bold', mb: 1 }}>{group.label}</Typography>
+          {group.directions.map(dir => (
+            <FormControlLabel
+              key={dir}
+              control={
+                <Checkbox
+                  checked={preferredDirs.includes(dir)}
+                  onChange={() => setPreferredDirs(prev =>
+                    prev.includes(dir)
+                      ? prev.filter(d => d !== dir)
+                      : [...prev, dir]
+                  )}
+                  size="small"
+                />
+              }
+              label={dir}
+              sx={{ m: 0, width: '100%' }}
+            />
+          ))}
+        </Box>
+      </Grid>
     ))}
-  </FormGroup>
+  </Grid>
 </Grid>
 
         {/* BOM Wind Observations Section */}
