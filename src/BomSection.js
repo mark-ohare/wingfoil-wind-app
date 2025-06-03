@@ -3,22 +3,28 @@ import { Paper, Typography, Grid, Table, TableHead, TableRow, TableCell, TableBo
 
 // Helper function to rate wind (copied from App.js for simplicity)
 function directionToDegrees(dir) {
-  const index = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'].indexOf(dir);
-  return index !== -1 ? index * 45 : null;
+  // 16-point compass
+  const map = {
+    N: 0, NNE: 22.5, NE: 45, ENE: 67.5,
+    E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+    S: 180, SSW: 202.5, SW: 225, WSW: 247.5,
+    W: 270, WNW: 292.5, NW: 315, NNW: 337.5
+  };
+  return map[dir];
 }
 
 function rateWind(speed, direction, min, max, preferredDirs) {
   if (speed === null || speed === undefined || speed < min || speed > max) return '';
   const degrees = directionToDegrees(direction);
-  if (degrees === null) return '';
+  if (degrees === undefined) return '';
 
-  const preferredDegrees = preferredDirs.map(directionToDegrees).filter(d => d !== null);
+  const preferredDegrees = preferredDirs.map(directionToDegrees).filter(d => d !== undefined);
   if (!preferredDegrees.length) return 'good'; // If no preferred dirs, any direction in range is good
 
   for (let prefDegree of preferredDegrees) {
     let diff = Math.abs(degrees - prefDegree);
-    if (diff > 180) diff = 360 - diff; // Handle wrap-around
-    if (diff <= 45) { // Allow +/- 45 degrees from preferred direction
+    if (diff > 180) diff = 360 - diff;
+    if (diff <= 22.5) { // Allow +/- 22.5 degrees from preferred direction
       return 'good';
     }
   }

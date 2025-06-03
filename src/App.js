@@ -3,7 +3,12 @@ import BomSection from './BomSection';
 import { Box, TextField, Button, Typography, Slider, Checkbox, FormControlLabel, FormGroup, Paper, Grid, Select, MenuItem } from '@mui/material';
 
 // --- Constants ---
-const WIND_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const WIND_DIRECTIONS = [
+  'N', 'NNE', 'NE', 'ENE',
+  'E', 'ESE', 'SE', 'SSE',
+  'S', 'SSW', 'SW', 'WSW',
+  'W', 'WNW', 'NW', 'NNW'
+];
 const WIND_MODELS = [
   { value: 'ecmwf_ifs025', label: 'ECMWF' },
   { value: 'gfs_seamless', label: 'NOAA US (GFS)' },
@@ -15,15 +20,31 @@ const WIND_MODELS = [
 ];
 
 function directionToDegrees(dir) {
-  // Convert compass direction to degrees
-  const map = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 };
+  // Convert compass direction to degrees (16-point compass)
+  const map = {
+    N: 0, NNE: 22.5, NE: 45, ENE: 67.5,
+    E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+    S: 180, SSW: 202.5, SW: 225, WSW: 247.5,
+    W: 270, WNW: 292.5, NW: 315, NNW: 337.5
+  };
   return map[dir];
 }
 
 function rateWind(speed, direction, min, max, preferredDirs) {
   if (speed < min || speed > max) return 'bad';
-  if (!preferredDirs.includes(direction)) return 'ok';
-  return 'good';
+  const dirDeg = directionToDegrees(direction);
+  if (dirDeg === undefined) return 'ok';
+  // If no preferredDirs, treat all directions as preferred
+  if (!preferredDirs || preferredDirs.length === 0) return 'good';
+  // Allow +/- 22.5 deg (one compass point) from preferred direction
+  for (let pref of preferredDirs) {
+    const prefDeg = directionToDegrees(pref);
+    if (prefDeg === undefined) continue;
+    let diff = Math.abs(dirDeg - prefDeg);
+    if (diff > 180) diff = 360 - diff;
+    if (diff <= 22.5) return 'good';
+  }
+  return 'ok';
 }
 
 function ForecastBlock({ block, minWind, maxWind, preferredDirs, waveData }) {
@@ -58,7 +79,7 @@ function ForecastBlock({ block, minWind, maxWind, preferredDirs, waveData }) {
 function App() {
   const [minWind, setMinWind] = useState(12);
   const [maxWind, setMaxWind] = useState(35);
-  const [preferredDirs, setPreferredDirs] = useState(['S', 'SW', 'SE']);
+  const [preferredDirs, setPreferredDirs] = useState(['S', 'SSW', 'SSE', 'SW', 'SE']);
   const [bomData, setBomData] = useState([]);
   const [bomApiUrls, setBomApiUrls] = useState([]);
   const [rawBom, setRawBom] = useState(null);
@@ -473,49 +494,48 @@ function App() {
           </Typography>
         )}
         {apiUrlDisplay && showApiData && (
-          <Typography variant="caption" sx={{ display: 'block', mb: 2, wordBreak: 'break-all', color: 'grey.600' }}>
-            API Call: {apiUrlDisplay}
-          </Typography>
-        )}
-        {apiResponseDisplay && showApiData && (
-          <Typography component="pre" variant="caption" sx={{ display: 'block', mb: 2, maxHeight: '200px', overflowY: 'auto', wordBreak: 'break-all', whiteSpace: 'pre-wrap', color: 'grey.800', bgcolor: 'grey.200', p: 1, borderRadius: 1, fontFamily: 'monospace' }}>
-            API Response:
-            {apiResponseDisplay}
-          </Typography>
-        )}
-        <Grid container spacing={2}>
+  <>
+    <Typography variant="h6" gutterBottom>Wind Speed Range</Typography>
+    <Slider
+      value={[minWind, maxWind]}
+      onChange={(_, newValue) => {
+        setMinWind(newValue[0]);
+        setMaxWind(newValue[1]);
+      }}
+      min={0}
+      max={40}
+      step={1}
+      valueLabelDisplay="auto"
+    />
+  </>
+) }
           <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>Wind Speed Range</Typography>
-            <Slider
-              value={[minWind, maxWind]}
-              onChange={(_, newValue) => {
-                setMinWind(newValue[0]);
-                setMaxWind(newValue[1]);
-              }}
-              min={0}
-              max={40}
-              step={1}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>Preferred Wind Directions</Typography>
-            <FormGroup row>
-              {WIND_DIRECTIONS.map(dir => (
-                <FormControlLabel
-                  key={dir}
-                  control={
-                    <Checkbox
-                      checked={preferredDirs.includes(dir)}
-                      onChange={() => handleDirChange(dir)}
-                    />
-                  }
-                  label={dir}
-                />
-              ))}
-            </FormGroup>
-          </Grid>
-        </Grid>
+  <Typography variant="h6" gutterBottom>Preferred Wind Directions</Typography>
+  <FormGroup row sx={{ flexWrap: 'wrap' }}>
+    {DIRECTION_GROUPS.map(group => (
+      <Box key={group.label} sx={{ mr: 2, minWidth: 70 }}>
+        <Typography variant="subtitle2" align="center">{group.label}</Typography>
+        {group.directions.map(dir => (
+          <FormControlLabel
+            key={dir}
+            control={
+              <Checkbox
+                checked={preferredDirs.includes(dir)}
+                onChange={() => setPreferredDirs(prev =>
+                  prev.includes(dir)
+                    ? prev.filter(d => d !== dir)
+                    : [...prev, dir]
+                )}
+                size="small"
+              />
+            }
+            label={dir}
+          />
+        ))}
+      </Box>
+    ))}
+  </FormGroup>
+</Grid>
 
         {/* BOM Wind Observations Section */}
       <BomSection 
