@@ -104,7 +104,7 @@ function App() {
   const [bomData, setBomData] = useState([]);
   const [bomApiUrls, setBomApiUrls] = useState([]);
   const [rawBom, setRawBom] = useState(null);
-  const [hideUnsuitableForecasts, setHideUnsuitableForecasts] = useState(false);
+  const [hideUnsuitableForecasts, setHideUnsuitableForecasts] = useState(true);
   const [showCoords, setShowCoords] = useState(false);
   const [showApiData, setShowApiData] = useState(false);
   const [selectedBomStations, setSelectedBomStations] = useState(['95872', '94870', '95864', '94853', '94871', '94847']);
@@ -466,12 +466,12 @@ function App() {
           <FormControlLabel
               control={
                 <Checkbox
-                  checked={hideUnsuitableForecasts}
+                  checked={!hideUnsuitableForecasts}
                   onChange={() => setHideUnsuitableForecasts(prev => !prev)}
                   size="small"
                 />
               }
-              label="Hide Unsuitable Wind Forecasts"
+              label="Show Unsuitable Wind Forecasts"
             />
             <FormControlLabel
               control={
@@ -573,59 +573,64 @@ function App() {
         rawBom={rawBom}
       />
 
-        <Typography variant="h6" sx={{ mt: 3 }}>Today's Wind Summary</Typography>
-        {bestHoursSummary && (
-          <Grid container spacing={2}>
-            {filteredGroups.map((group, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Paper elevation={2} sx={{ p: 2, background: group.rating === 'good' ? '#a5d6a7' : group.rating === 'ok' ? '#fff59d' : '#ef9a9a' }}>
-                  <Typography variant="subtitle2">{group.startTime} - {group.endTime}</Typography>
-                  <Typography>
-                    Wind: {group.averageWind.toFixed(1)} kt {group.direction}
-                  </Typography>
-                  <Typography>
-                    Wind Wave: {group.averageWindWaveHeight?.toFixed(1) ?? 'N/A'} m {group.averageWindWaveDir ? `(${Math.round(group.averageWindWaveDir)}°)` : ''}
-                  </Typography>
-                  <Typography>Rating: {group.rating.toUpperCase()}</Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        )}
-
-        <Typography variant="h6" sx={{ mt: 3 }}>Wind Forecast</Typography>
+      <Typography variant="h6" sx={{ mt: 3 }}>Today's Wind Summary</Typography>
+      {bestHoursSummary && filteredGroups.length > 0 ? (
         <Grid container spacing={2}>
-          {filteredForecast.map((block, index) => {
-            const rating = rateWind(block.windSpeed, block.windDir, minWind, maxWind, preferredDirs);
-            
-            let color = rating === 'good' ? '#a5d6a7' : rating === 'ok' ? '#fff59d' : '#ef9a9a';
-            
-            // Find the corresponding wave data for this forecast block's time
-            const waveBlock = waveData.find(w => w.time.getTime() === block.time.getTime());
-            
-            return (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Paper elevation={2} sx={{ p: 2, mb: 1, background: color }}>
-                  <Typography variant="subtitle2">{block.displayDate}</Typography>
-                  <Typography variant="subtitle2">{block.displayTime}</Typography>
-                  <Typography>
-                    Wind: {block.windSpeed?.toFixed(1) ?? 'N/A'} kt {block.windDir ?? 'N/A'} ({block.windDeg?.toFixed(0) ?? 'N/A'}°)
-                  </Typography>
-                  
-                  {/* Display wave data if found */}
-                  {waveBlock && (
-                    <Box sx={{ mt: 1 }}>
-                      <Typography>
-                        Wind Wave: {waveBlock.windWaveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.windWaveDir ? `${Math.round(waveBlock.windWaveDir)}°` : ''}
-                      </Typography>
-                      <Typography>Rating: {rating.toUpperCase()}</Typography>
-                    </Box>
-                  )}
-                </Paper>
-              </Grid>
-            );
-          })}
+          {filteredGroups.map((group, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Paper elevation={2} sx={{ p: 2, background: group.rating === 'good' ? '#a5d6a7' : group.rating === 'ok' ? '#fff59d' : '#ef9a9a' }}>
+                <Typography variant="subtitle2">{group.startTime} - {group.endTime}</Typography>
+                <Typography>
+                  Wind: {group.averageWind.toFixed(1)} kt {group.direction}
+                </Typography>
+                <Typography>Rating: {group.rating.toUpperCase()}</Typography>
+                {group.averageWaveHeight !== undefined && (
+                  <Typography>Wave: {group.averageWaveHeight.toFixed(1)} m</Typography>
+                )}
+                {group.averageWindWaveHeight !== undefined && (
+                  <Typography>Wind Wave: {group.averageWindWaveHeight.toFixed(1)} m</Typography>
+                )}
+              </Paper>
+            </Grid>
+          ))}
         </Grid>
+      ) : (
+        <Typography sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}>
+          No suitable wind forecasts found.<br/>
+          Try adjusting your preferred wind directions, wind speed range, or forecast model.
+        </Typography>
+      )}
+
+      {/* Wind Forecast Grid */}
+      <Typography variant="h6" sx={{ mt: 3 }}>Wind Forecast</Typography>
+      <Grid container spacing={2}>
+        {filteredForecast.map((block, index) => {
+          const rating = rateWind(block.windSpeed, block.windDir, minWind, maxWind, preferredDirs);
+          let color = rating === 'good' ? '#a5d6a7' : rating === 'ok' ? '#fff59d' : '#ef9a9a';
+          // Find the corresponding wave data for this forecast block's time
+          const waveBlock = waveData.find(w => w.time.getTime() === block.time.getTime());
+          return (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Paper elevation={2} sx={{ p: 2, mb: 1, background: color }}>
+                <Typography variant="subtitle2">{block.displayDate}</Typography>
+                <Typography variant="subtitle2">{block.displayTime}</Typography>
+                <Typography>
+                  Wind: {block.windSpeed?.toFixed(1) ?? 'N/A'} kt {block.windDir ?? 'N/A'} ({block.windDeg?.toFixed(0) ?? 'N/A'}°)
+                </Typography>
+                {/* Display wave data if found */}
+                {waveBlock && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography>
+                      Wind Wave: {waveBlock.windWaveHeight?.toFixed(1) ?? 'N/A'} m {waveBlock.windWaveDir ? `${Math.round(waveBlock.windWaveDir)}°` : ''}
+                    </Typography>
+                    <Typography>Rating: {rating.toUpperCase()}</Typography>
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+          );
+        })}
+      </Grid>
       </Paper>
     </Box>
   );
