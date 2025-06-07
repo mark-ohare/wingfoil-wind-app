@@ -242,7 +242,7 @@ function App() {
 
             const windSpeed = windSpeeds[i];
             const deg = windDirections[i];
-            const idx = Math.round(deg / 45) % 8;
+            const idx = Math.round(deg / 22.5) % 16;
             const windDir = WIND_DIRECTIONS[idx];
 
             windBlocks.push({ 
@@ -518,6 +518,23 @@ function App() {
             (Lat: {lat.toFixed(4)}, Lon: {lon.toFixed(4)})
           </Typography>
         )}
+        {/* Wind Speed Slider should always show */}
+        <Box sx={{ my: 2 }}>
+          <Typography variant="h6" gutterBottom>Wind Speed Range</Typography>
+          <Slider
+            value={[minWind, maxWind]}
+            onChange={(_, newValue) => {
+              setMinWind(newValue[0]);
+              setMaxWind(newValue[1]);
+            }}
+            min={0}
+            max={40}
+            step={1}
+            valueLabelDisplay="auto"
+          />
+        </Box>
+
+        {/* Show API Data block only if ticked */}
         {apiUrlDisplay && showApiData && (
           <Box sx={{ my: 2 }}>
             <Typography variant="h6" gutterBottom>API URLs</Typography>
