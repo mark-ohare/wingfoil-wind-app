@@ -519,21 +519,21 @@ function App() {
           </Typography>
         )}
         {apiUrlDisplay && showApiData && (
-  <>
-    <Typography variant="h6" gutterBottom>Wind Speed Range</Typography>
-    <Slider
-      value={[minWind, maxWind]}
-      onChange={(_, newValue) => {
-        setMinWind(newValue[0]);
-        setMaxWind(newValue[1]);
-      }}
-      min={0}
-      max={40}
-      step={1}
-      valueLabelDisplay="auto"
-    />
-  </>
-) }
+          <Box sx={{ my: 2 }}>
+            <Typography variant="h6" gutterBottom>API URLs</Typography>
+            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+              {apiUrlDisplay}
+            </Typography>
+            {apiResponseDisplay && (
+              <>
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Raw API Response</Typography>
+                <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: 300, overflow: 'auto' }}>
+                  {apiResponseDisplay}
+                </Box>
+              </>
+            )}
+          </Box>
+        )}
           <Grid item xs={12}>
   <Typography variant="h6" gutterBottom>Preferred Wind Directions</Typography>
   <Grid container spacing={2}>
