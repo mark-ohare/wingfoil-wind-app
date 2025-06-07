@@ -364,7 +364,7 @@ function App() {
       if (blockForecast.length > 0) {
         const averageWind = blockForecast.reduce((sum, block) => sum + block.windSpeed, 0) / blockForecast.length;
         const averageDirection = blockForecast.reduce((sum, block) => sum + block.windDeg, 0) / blockForecast.length;
-        const directionIdx = Math.round(averageDirection / 45) % 8;
+        const directionIdx = Math.round(averageDirection / 22.5) % 16;
         const direction = WIND_DIRECTIONS[directionIdx];
 
         const rating = rateWind(averageWind, direction, minWind, maxWind, preferredDirs);
