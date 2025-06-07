@@ -189,6 +189,8 @@ function App() {
         models: selectedModel
       });
       const windApiUrl = `https://api.open-meteo.com/v1/forecast?${windParams.toString()}`;
+      // Set API URL display for Show API Data tickbox
+      setApiUrlDisplay(`Wind API: ${windApiUrl}\nWave API: (set after)`);
 
       // Fetch wave data
       const waveParams = new URLSearchParams({
@@ -199,6 +201,8 @@ function App() {
         timezone: 'Australia/Sydney'
       });
       const waveApiUrl = `https://marine-api.open-meteo.com/v1/marine?${waveParams.toString()}`;
+      // Append wave API URL to apiUrlDisplay
+      setApiUrlDisplay(`Wind API: ${windApiUrl}\nWave API: ${waveApiUrl}`);
 
       try {
         // Fetch wind data
