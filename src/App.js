@@ -363,7 +363,16 @@ function App() {
 
       if (blockForecast.length > 0) {
         const averageWind = blockForecast.reduce((sum, block) => sum + block.windSpeed, 0) / blockForecast.length;
-        const averageDirection = blockForecast.reduce((sum, block) => sum + block.windDeg, 0) / blockForecast.length;
+        // Circular mean for wind direction
+        function circularMean(degreesArray) {
+          const radians = degreesArray.map(deg => deg * Math.PI / 180);
+          const sumSin = radians.reduce((sum, rad) => sum + Math.sin(rad), 0);
+          const sumCos = radians.reduce((sum, rad) => sum + Math.cos(rad), 0);
+          let meanRad = Math.atan2(sumSin / degreesArray.length, sumCos / degreesArray.length);
+          if (meanRad < 0) meanRad += 2 * Math.PI;
+          return meanRad * 180 / Math.PI;
+        }
+        const averageDirection = circularMean(blockForecast.map(block => block.windDeg));
         const directionIdx = Math.round(averageDirection / 22.5) % 16;
         const direction = WIND_DIRECTIONS[directionIdx];
 
